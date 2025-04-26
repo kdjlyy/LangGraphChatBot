@@ -4,6 +4,7 @@ from langchain.schema import Document
 from langchain_core.messages import AIMessage, HumanMessage
 from chains.models import load_vector_store
 from graph.graph import create_graph, stream_graph_updates, GraphState
+from utils.common import gen_mermaid
 
 def main():
     # langchain.debug = True  # 启用langchain调试模式，可以获得如完整提示词等信息
@@ -20,6 +21,8 @@ def main():
         documents=[Document(page_content="upload_files/test.pdf")],
     )
     graph = create_graph()
+
+    gen_mermaid(graph, "graph.mmd")
 
     # 对话
     while True:
