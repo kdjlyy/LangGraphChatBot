@@ -9,3 +9,6 @@ wheels/
 # Virtual environments
 .venv
 upload_files/*
+.idea/
+.vscode/
+.env
