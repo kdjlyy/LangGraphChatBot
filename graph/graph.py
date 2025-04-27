@@ -23,15 +23,12 @@ def route_question(state: GraphState) -> str:
     返回:
         str: 下一个要调用的节点名称
     """
-    print("--- ROUTE QUESTION ---")
+    print("--- 🤖 正在根据类型选择分支 ---")
     if state['type'] == 'websearch':
-        print("--- ROUTE QUESTION TO EXTRACT KEYWORDS ---")
         return "extract_keywords"
     if state['type'] == 'file':
-        print("--- ROUTE QUESTION TO FILE PROCESS ---")
         return "file_process"
     elif state['type'] == 'chat':
-        print("--- ROUTE QUESTION TO GENERATE ---")
         return "generate"
 
 def generate(state: GraphState) -> GraphState:
@@ -44,7 +41,7 @@ def generate(state: GraphState) -> GraphState:
     返回:
         state (GraphState): 返回添加了LLM生成内容的新状态
     """
-    print("--- GENERATE ---")
+    print("--- 🤖 正在生成回答 ---")
     chain = GenerateChain(state["model_name"])
     messages = state["messages"]
     state["messages"] = chain.invoke({
@@ -66,12 +63,13 @@ def file_process(state: GraphState, config: RunnableConfig) -> GraphState:
         state (GraphState): 返回图状态，将文档添加 config 中的向量存储
     """
 
-    print("--- 处理文件中 ---")
+    print("--- 🤖 开始处理文件 ---")
     vector_store = config["configurable"]["vectorstore"]
 
     for doc in state["documents"]:
         file_path: str = doc.page_content
         if os.path.exists(file_path):
+            print(f"--- 📄 文件路径: {file_path}")
             split_docs: list[Document] = None
             if file_path.endswith(".txt") or file_path.endswith(".md"):
                 # 处理文本或Markdown文件
@@ -103,6 +101,8 @@ def file_process(state: GraphState, config: RunnableConfig) -> GraphState:
 
             # 将处理后的文档添加到向量存储中
             vector_store.add_documents(split_docs)
+        else:
+            print(f"--- 📄 文件路径不存在: {file_path}")
     return state
 
 def extract_keywords(state: GraphState, config: RunnableConfig) -> GraphState:
@@ -117,11 +117,11 @@ def extract_keywords(state: GraphState, config: RunnableConfig) -> GraphState:
         state (GraphState): 返回添加了提取关键词的新状态
     """
 
-    print("--- 正在提取关键词 ---")
+    print("--- 🤖 正在提取关键词 ---")
     chain = SummaryChain(state["model_name"])
     messages = state["messages"]
     query = chain.invoke({"question": messages[-1].content, "history": messages[:-1]})
-    print(query.content)
+    # print(query.content)
 
     if state["type"] == "websearch":
         # 将生成的搜索查询添加到消息列表中，下一个节点将会使用
@@ -161,8 +161,8 @@ def web_search(state: GraphState) -> GraphState:
         state (GraphState): 返回添加了网络搜索结果的新状态
     """
 
-    print("--- 正在进行网络搜索 ---")
-    web_search_tool = TavilySearchResults(k=3)
+    print("---🌐 正在进行网络搜索 ---")
+    web_search_tool = TavilySearchResults(k = 3)
     documents = state["documents"]
     try:
         docs = web_search_tool.invoke({"query": state["messages"][-1].content})
@@ -172,6 +172,7 @@ def web_search(state: GraphState) -> GraphState:
         state["documents"] = documents
     except:
         pass
+    print(f"🌐 搜索结果:\n{documents}")
     return state
 
 def create_graph() -> CompiledStateGraph:
