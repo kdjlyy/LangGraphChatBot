@@ -127,5 +127,10 @@ graph TD;
 
 ## 其他
 
-**NOTE:** 项目支持解析 `pdf`、`word`、`xlsx` 等其他格式的文件，但是由于部署服务的内存不足目前仅支持解析 `txt` 和 `md` 文件，可以在 [app.py](./app.py) 中修改 `file_uploader` 的参数支持其他格式的文件。
+**NOTE:** 项目支持解析 `pdf`、`word`、`xlsx` 等其他格式的文件，但是由于部署服务的内存不足目前仅支持解析 `txt` 和 `md` 文件，可以在 [app.py](./app.py) 中修改 `file_uploader` 的参数支持其他格式的文件。  
+
+---
+
+更多 Agent 项目介绍请参考：[Agent](https://github.com/kdjlyy/Agent)。
+
 
