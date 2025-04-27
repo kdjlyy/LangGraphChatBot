@@ -36,7 +36,7 @@ if "graph" not in st.session_state:
     st.session_state.graph = create_graph()
 # 初始化会话ID和向量存储
 if "config" not in st.session_state:
-    st.session_state.config = {"configurable": {"thread_id": uuid.uuid4().hex, "vectorstore": load_vector_store("BAAI/bge-m3")}}
+    st.session_state.config = {"configurable": {"thread_id": uuid.uuid4().hex, "vectorstore": load_vector_store("Pro/BAAI/bge-m3")}}
 # 初始化对话历史记录
 if "history" not in st.session_state:
     st.session_state.history = []

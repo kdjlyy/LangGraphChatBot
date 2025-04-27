@@ -78,7 +78,7 @@ def file_process(state: GraphState, config: RunnableConfig) -> GraphState:
                 splitter = RecursiveCharacterTextSplitter(
                     separators=["\n\n", "\n", " ", ".", ",", "\u200B", "\uff0c", "\u3001", "\uff0e", "\u3002", ""],
                     chunk_size=1024,
-                    chunk_overlap=128,
+                    chunk_overlap=256,
                     add_start_index=True
                 )
                 split_docs = splitter.split_documents(docs)
@@ -92,12 +92,6 @@ def file_process(state: GraphState, config: RunnableConfig) -> GraphState:
                     strip_headers = False
                 )
                 split_docs = splitter.split_text(docs)
-
-
-            print('*' * 80)
-            for split_doc in split_docs:
-                print(split_doc)
-            print('*' * 80)
 
             # 将处理后的文档添加到向量存储中
             vector_store.add_documents(split_docs)
@@ -121,14 +115,18 @@ def extract_keywords(state: GraphState, config: RunnableConfig) -> GraphState:
     chain = SummaryChain(state["model_name"])
     messages = state["messages"]
     query = chain.invoke({"question": messages[-1].content, "history": messages[:-1]})
-    # print(query.content)
 
     if state["type"] == "websearch":
         # 将生成的搜索查询添加到消息列表中，下一个节点将会使用
         state["messages"] = query
     elif state["type"] == "file":
         # 使用生成的搜索查询在向量数据库中搜索
-        docs = config["configurable"]["vectorstore"].max_marginal_relevance_search(query.content)
+        # docs = config["configurable"]["vectorstore"].max_marginal_relevance_search(query.content, 5)
+        docs = config["configurable"]["vectorstore"].similarity_search(query.content, 5)
+        print(f"--- 📄 召回结果:")
+        for idx, doc in enumerate(docs):
+            print(f"============================ doc-{idx + 1}  {doc.metadata} ============================ ")
+            print(doc.page_content)
         state["documents"] = docs
     return state
 

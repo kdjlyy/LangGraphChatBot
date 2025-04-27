@@ -17,6 +17,8 @@ class SummaryChain:
         self.prompt = ChatPromptTemplate.from_template(
             "You are a professional assistant specializing in extracting keywords from user questions and chat histories. "
             "Extract keywords and connect them with spaces to output a efficient and precise search query. "
+            "First, you need to take the user question itself as the first keyword, "
+            "then extract the keyword from the user question and append it to the keyword list."
             "Be careful not answer the question directly, just output the search query.\n\nHistories: {history}\n\nQuestion: {question}"
         )
         self.chain = self.prompt | self.llm
