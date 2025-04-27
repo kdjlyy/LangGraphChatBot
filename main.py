@@ -1,10 +1,11 @@
 import uuid
+import datetime
 from dotenv import load_dotenv
 from langchain.schema import Document
 from langchain_core.messages import AIMessage, HumanMessage
 from chains.models import load_vector_store
 from graph.graph import create_graph, stream_graph_updates, GraphState
-from utils.common import gen_mermaid
+from utils.common import *
 
 def main():
     # langchain.debug = True  # 启用langchain调试模式，可以获得如完整提示词等信息
@@ -22,7 +23,8 @@ def main():
     )
     graph = create_graph()
 
-    gen_mermaid(graph, "graph.mmd")
+    # 生成 mermaid 图
+    # gen_mermaid(graph, "graph.mmd")
 
     # 对话
     while True:
@@ -31,7 +33,7 @@ def main():
             continue
         if user_input.lower() in ["e", "exit", 'q', "quit"]:
             break
-        state["messages"] = [HumanMessage(user_input)]
+        state["messages"] = [HumanMessage(user_input + f"\n当前日期是: {get_current_time()}")]
         # 流式获取AI的回复
         for answer in stream_graph_updates(graph, state, config):
             print(answer, end="")

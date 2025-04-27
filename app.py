@@ -11,6 +11,7 @@ import streamlit as st
 from streamlit_extras.bottom_container import bottom
 from chains.models import load_vector_store
 from graph.graph import create_graph, stream_graph_updates, GraphState
+from utils.common import *
 
 # 设置上传文件的存储路径
 file_path = "upload_files/"
@@ -57,16 +58,15 @@ with st.sidebar:
     st.divider()
 
     # 显示版本信息
-    st.text(f"{datetime.datetime.now().strftime('%Y.%m.%d')} - kdjlyy")
-
+    st.caption(f"{datetime.datetime.now().strftime('%Y.%m')} - [LangGraphChatBot](https://github.com/kdjlyy/LangGraphChatBot)")
 # 定义对话类型选项
-type_options = {"⭐️ 离线对话": "chat", "🛜 联网搜索": "websearch", "⌨️ 代码模式": "code"}
+type_options = {"⭐️ 离线对话": "chat", "🌐 联网搜索": "websearch", "⌨️ 代码模式": "code"}
 question = None
 with bottom():
     # 底部容器，包含工具选择、文件上传和输入框
     st.session_state.settings["type"] = type_options[st.radio("工具选择", type_options.keys(), horizontal=True, label_visibility="collapsed", index=list(type_options.values()).index(st.session_state.settings["type"]))]
-    # 文件上传组件
-    uploaded_file = st.file_uploader("上传文件", type=["txt", "md", "pdf", "docx", "xlsx"], accept_multiple_files=False, label_visibility="collapsed")
+    # 文件上传组件, pdf、doc、xlsx 格式的文件可能造成系统资源不足
+    uploaded_file = st.file_uploader("上传文件", type=["txt", "md"], accept_multiple_files=False, label_visibility="collapsed")
     # 聊天输入框
     question = st.chat_input('输入您要询问的内容，shift + enter 换行')
 
@@ -83,12 +83,13 @@ if question:
 
     # 准备请求状态
     state = []
+    message = [{"role": "system", "content": f"当前日期是：{get_current_time()}"}, {"role": "user", "content": question}]
     if st.session_state.settings["type"] == "code":
         # 代码模式使用专门的代码模型
-        state = {"model_name": "Qwen/QwQ-32B", "messages": [{"role": "user", "content": question}], "type": "chat", "documents": []}
+        state = {"model_name": "Qwen/QwQ-32B", "messages": message, "type": "chat", "documents": []}
     else:
         # 其他模式使用选择的模型
-        state = {"model_name": st.session_state.settings["model_name"], "messages": [{"role": "user", "content": question}], "type": st.session_state.settings["type"], "documents": []}
+        state = {"model_name": st.session_state.settings["model_name"], "messages": message, "type": st.session_state.settings["type"], "documents": []}
 
     # 处理文件上传
     if uploaded_file:

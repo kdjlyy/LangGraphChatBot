@@ -8,7 +8,8 @@ wheels/
 
 # Virtual environments
 .venv
-upload_files/*
+
+upload_files/**
 .idea/
 .vscode/
 .env

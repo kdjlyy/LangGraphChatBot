@@ -56,7 +56,7 @@ def generate(state: GraphState) -> GraphState:
 
 def file_process(state: GraphState, config: RunnableConfig) -> GraphState:
     """
-    处理文件。
+    处理文件
 
     参数:
         state (GraphState): 当前图的状态
@@ -144,10 +144,10 @@ def decide_to_generate(state: GraphState) -> str:
     """
 
     if state["type"] == "websearch":
-        print("--- DECIDE TO WEB SEARCH ---")
+        print("--- 🌐 需要进行网络搜索 ---")
         return "websearch"
     elif state["type"] == "file":
-        print("--- DECIDE TO GENERATE ---")
+        print("--- ⭐ 无需搜索，直接生成答案 ---")
         return "generate"
 
 def web_search(state: GraphState) -> GraphState:
