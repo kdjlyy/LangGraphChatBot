@@ -2,7 +2,7 @@ from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_core.vectorstores import InMemoryVectorStore
 
 
-def load_model(model_name: str) -> ChatOpenAI:
+def load_model(model_name: str, temperature: float) -> ChatOpenAI:
     """
     加载语言模型
 
@@ -14,7 +14,7 @@ def load_model(model_name: str) -> ChatOpenAI:
     """
     return ChatOpenAI(
         model=model_name,
-        temperature=0.0,
+        temperature=temperature,
     )
 
 

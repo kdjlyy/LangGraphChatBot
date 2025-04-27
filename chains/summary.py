@@ -6,14 +6,14 @@ class SummaryChain:
     一个用于生成搜索查询的类。
     从用户问题和聊天记录中提取关键词，并生成高效的搜索查询。
     """
-    def __init__(self, model_name):
+    def __init__(self, model_name, temperature):
         """
         初始化 SummaryChain 类，并加载指定的语言模型。
 
         参数:
             model_name (str): 要加载的语言模型的名称。
         """
-        self.llm = load_model(model_name)
+        self.llm = load_model(model_name, temperature)
         self.prompt = ChatPromptTemplate.from_template(
             "You are a professional assistant specializing in extracting keywords from user questions and chat histories. "
             "Extract keywords and connect them with spaces to output a efficient and precise search query. "

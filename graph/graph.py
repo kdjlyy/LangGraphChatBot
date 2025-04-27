@@ -42,7 +42,7 @@ def generate(state: GraphState) -> GraphState:
         state (GraphState): 返回添加了LLM生成内容的新状态
     """
     print("--- 🤖 正在生成回答 ---")
-    chain = GenerateChain(state["model_name"])
+    chain = GenerateChain(state["model_name"], state["temperature"])
     messages = state["messages"]
     state["messages"] = chain.invoke({
         "question": messages[-1].content,
@@ -77,7 +77,7 @@ def file_process(state: GraphState, config: RunnableConfig) -> GraphState:
                 # 文本分割
                 splitter = RecursiveCharacterTextSplitter(
                     separators=["\n\n", "\n", " ", ".", ",", "\u200B", "\uff0c", "\u3001", "\uff0e", "\u3002", ""],
-                    chunk_size=1024,
+                    chunk_size=512,
                     chunk_overlap=256,
                     add_start_index=True
                 )
@@ -112,7 +112,7 @@ def extract_keywords(state: GraphState, config: RunnableConfig) -> GraphState:
     """
 
     print("--- 🤖 正在提取关键词 ---")
-    chain = SummaryChain(state["model_name"])
+    chain = SummaryChain(state["model_name"], state["temperature"])
     messages = state["messages"]
     query = chain.invoke({"question": messages[-1].content, "history": messages[:-1]})
 

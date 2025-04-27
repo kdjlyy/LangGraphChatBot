@@ -6,14 +6,14 @@ class GenerateChain:
     一个用于生成问答任务响应的类。
     它使用语言模型和提示模板来处理输入数据。
     """
-    def __init__(self, model_name):
+    def __init__(self, model_name, temperature):
         """
         初始化 GenerateChain 类，并加载指定的语言模型。
 
         参数:
             model_name (str): 要加载的语言模型的名称。
         """
-        self.llm = load_model(model_name)
+        self.llm = load_model(model_name, temperature)
         self.prompt = ChatPromptTemplate.from_template(
             "You are an assistant for question-answering tasks. "
             "Use the following documents or chat histories to answer the question. "

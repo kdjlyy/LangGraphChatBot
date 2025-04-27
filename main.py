@@ -18,6 +18,7 @@ def main():
     }
     state = GraphState(
         model_name="Qwen/QwQ-32B",
+        temperature=0.0,
         type="chat",
         documents=[Document(page_content="upload_files/test.pdf")],
     )
