@@ -27,7 +27,7 @@ type_options = {"⭐️ 离线对话": "chat", "🌐 联网搜索": "websearch",
 
 # 初始化上传状态、模型名称和对话类型
 if "settings" not in st.session_state:
-    st.session_state.settings = {"type": "chat"}  # 默认为离线对话
+    st.session_state.settings = {"type": "chat", "uploaded": False}  # 默认为离线对话
 # 初始化会话ID和向量存储
 if "config" not in st.session_state:
     st.session_state.config = {"configurable": {"thread_id": uuid.uuid4().hex, "vectorstore": None}}

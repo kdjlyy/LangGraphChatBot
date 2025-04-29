@@ -1,3 +1,10 @@
+## 🎉 News
+
+- [x] [2025.04.29] 🎯📢现已接入火山方舟（ARK），支持选择`doubao-embedding-text-240715`和`doubao-embedding-large-text-240915`
+Embedding 模型，分别对应 2560 和 4096 向量维度。
+
+---
+
 ## 简介
 
 LangGraphChatBot 是基于 LangChain 和 LangGraph 的 AI 聊天机器人，可以用于回答问题、生成文章、联网搜索、处理文件等。该应用具备以下功能：

@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 from langchain.schema import Document
 from langchain_core.runnables import RunnableConfig
 from langchain_community.document_loaders import TextLoader
@@ -23,7 +24,7 @@ def route_question(state: GraphState) -> str:
     返回:
         str: 下一个要调用的节点名称
     """
-    print("--- 🤖 正在根据类型选择分支 ---")
+    print("🤖 正在根据类型选择分支")
     if state['type'] == 'websearch':
         return "extract_keywords"
     if state['type'] == 'file':
@@ -41,7 +42,7 @@ def generate(state: GraphState) -> GraphState:
     返回:
         state (GraphState): 返回添加了LLM生成内容的新状态
     """
-    print("--- 🤖 正在生成回答 ---")
+    print("🤖 正在生成回答")
     chain = GenerateChain(state["model_name"], state["temperature"])
     messages = state["messages"]
     state["messages"] = chain.invoke({
@@ -63,7 +64,7 @@ def file_process(state: GraphState, config: RunnableConfig) -> GraphState:
         state (GraphState): 返回图状态，将文档添加 config 中的向量存储
     """
 
-    print("--- 🤖 开始处理文件 ---")
+    print("🤖 开始处理文件")
     vector_store = config["configurable"]["vectorstore"]
 
     for doc in state["documents"]:
@@ -96,7 +97,7 @@ def file_process(state: GraphState, config: RunnableConfig) -> GraphState:
             # 将处理后的文档添加到向量存储中
             vector_store.add_documents(split_docs)
         else:
-            print(f"--- 📄 文件路径不存在: {file_path}")
+            print(f"📄 文件路径不存在: {file_path}")
     return state
 
 def extract_keywords(state: GraphState, config: RunnableConfig) -> GraphState:
@@ -111,7 +112,7 @@ def extract_keywords(state: GraphState, config: RunnableConfig) -> GraphState:
         state (GraphState): 返回添加了提取关键词的新状态
     """
 
-    print("--- 🤖 正在提取关键词 ---")
+    print("🤖 正在提取关键词")
     chain = SummaryChain(state["model_name"], state["temperature"])
     messages = state["messages"]
     query = chain.invoke({"question": messages[-1].content, "history": messages[:-1]})
@@ -122,10 +123,12 @@ def extract_keywords(state: GraphState, config: RunnableConfig) -> GraphState:
     elif state["type"] == "file":
         # 使用生成的搜索查询在向量数据库中搜索
         # docs = config["configurable"]["vectorstore"].max_marginal_relevance_search(query.content, 5)
-        docs = config["configurable"]["vectorstore"].similarity_search(query.content, 5)
-        print(f"--- 📄 召回结果:")
-        for idx, doc in enumerate(docs):
-            print(f"============================ doc-{idx + 1}  {doc.metadata} ============================ ")
+        docs = config["configurable"]["vectorstore"].similarity_search_with_score(query.content, 5)
+        print(f" 📄 召回结果:")
+        idx, curr_time_str = 0, datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        for doc, score in docs:
+            idx += 1
+            print(f"============= [{curr_time_str}] [{idx}] Score:{score} Source:{doc.metadata['source']} =============")
             print(doc.page_content)
         state["documents"] = docs
     return state
