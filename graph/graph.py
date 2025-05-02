@@ -1,18 +1,22 @@
 import os
 from datetime import datetime
+
 from langchain.schema import Document
-from langchain_core.runnables import RunnableConfig
 from langchain_community.document_loaders import TextLoader
 from langchain_community.tools.tavily_search import TavilySearchResults
+from langchain_core.runnables import RunnableConfig
 from langchain_text_splitters import MarkdownHeaderTextSplitter, RecursiveCharacterTextSplitter
-from langgraph.graph.state import StateGraph, CompiledStateGraph, END
 from langgraph.checkpoint.memory import MemorySaver
+from langgraph.graph.state import StateGraph, CompiledStateGraph, END
 from marker.converters.pdf import PdfConverter
 from marker.models import create_model_dict
 from marker.output import text_from_rendered
-from graph.graph_state import GraphState
-from chains.summary import SummaryChain
+
 from chains.generate import GenerateChain
+from chains.summary import SummaryChain
+from graph.graph_state import GraphState
+from utils.common import get_current_time
+
 
 def route_question(state: GraphState) -> str:
     """
@@ -48,7 +52,8 @@ def generate(state: GraphState) -> GraphState:
     state["messages"] = chain.invoke({
         "question": messages[-1].content,
         "history": messages[:-1],
-        "documents": state["documents"]
+        "documents": state["documents"],
+        "current_date": get_current_time()
     })
     return state
 
@@ -70,7 +75,7 @@ def file_process(state: GraphState, config: RunnableConfig) -> GraphState:
     for doc in state["documents"]:
         file_path: str = doc.page_content
         if os.path.exists(file_path):
-            print(f"--- 📄 文件路径: {file_path}")
+            print(f"📄 文件路径: {file_path}")
             split_docs: list[Document] = None
             if file_path.endswith(".txt") or file_path.endswith(".md"):
                 # 处理文本或Markdown文件
@@ -115,7 +120,8 @@ def extract_keywords(state: GraphState, config: RunnableConfig) -> GraphState:
     print("🤖 正在提取关键词")
     chain = SummaryChain(state["model_name"], state["temperature"])
     messages = state["messages"]
-    query = chain.invoke({"question": messages[-1].content, "history": messages[:-1]})
+    # query = chain.invoke({"question": messages[-1].content, "history": messages[:-1]})
+    query = chain.invoke({"question": messages[-1].content, "current_time": get_current_time()})
 
     if state["type"] == "websearch":
         # 将生成的搜索查询添加到消息列表中，下一个节点将会使用
@@ -123,14 +129,26 @@ def extract_keywords(state: GraphState, config: RunnableConfig) -> GraphState:
     elif state["type"] == "file":
         # 使用生成的搜索查询在向量数据库中搜索
         # docs = config["configurable"]["vectorstore"].max_marginal_relevance_search(query.content, 5)
-        docs = config["configurable"]["vectorstore"].similarity_search_with_score(query.content, 5)
-        print(f" 📄 召回结果:")
-        idx, curr_time_str = 0, datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        for doc, score in docs:
+        docs_and_scores = config["configurable"]["vectorstore"].similarity_search_with_score(query.content, 20)
+        print(f" 📄 召回共{len(docs_and_scores)}篇文档:")
+        idx, docs, curr_time_str = 0, [], datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        for doc, score in docs_and_scores:
+            docs.append(doc)
             idx += 1
-            print(f"============= [{curr_time_str}] [{idx}] Score:{score} Source:{doc.metadata['source']} =============")
+            print(f"============= [Recall] [{curr_time_str}] [{idx}] Score:{score} Source:{doc.metadata['source']} =============")
             print(doc.page_content)
-        state["documents"] = docs
+
+        # rerank
+        docs_result = config["configurable"]["rerank"].rerank(docs, query.content, 3)
+
+        idx = 0
+        for doc in (docs_result if docs_result else []):
+            idx += 1
+            print(f"============= [Rerank] [{curr_time_str}] [{idx}] Source:{doc.metadata['source']} =============")
+            print(doc.page_content)
+
+        state["documents"] = docs_result
+
     return state
 
 def decide_to_generate(state: GraphState) -> str:
@@ -145,10 +163,10 @@ def decide_to_generate(state: GraphState) -> str:
     """
 
     if state["type"] == "websearch":
-        print("--- 🌐 需要进行网络搜索 ---")
+        print("🌐 需要进行网络搜索")
         return "websearch"
     elif state["type"] == "file":
-        print("--- ⭐ 无需搜索，直接生成答案 ---")
+        print("⭐ 无需搜索，直接生成答案")
         return "generate"
 
 def web_search(state: GraphState) -> GraphState:
@@ -162,8 +180,8 @@ def web_search(state: GraphState) -> GraphState:
         state (GraphState): 返回添加了网络搜索结果的新状态
     """
 
-    print("---🌐 正在进行网络搜索 ---")
-    web_search_tool = TavilySearchResults(k = 3)
+    print(f"🌐 正在进行网络搜索，搜索网页数量：{state['search_num']}...")
+    web_search_tool = TavilySearchResults(k = state["search_num"])
     documents = state["documents"]
     try:
         docs = web_search_tool.invoke({"query": state["messages"][-1].content})
@@ -173,7 +191,7 @@ def web_search(state: GraphState) -> GraphState:
         state["documents"] = documents
     except:
         pass
-    print(f"🌐 搜索结果:\n{documents}")
+    print(f"🌐 搜索结果:\n{documents[0].page_content}")
     return state
 
 def create_graph() -> CompiledStateGraph:

@@ -14,12 +14,22 @@ class SummaryChain:
             model_name (str): 要加载的语言模型的名称。
         """
         self.llm = load_model(model_name, temperature)
+        # self.prompt = ChatPromptTemplate.from_template(
+            # "You are a professional assistant specializing in extracting keywords from user questions and chat histories. "
+            # "Extract keywords and connect them with spaces to output a efficient and precise search query. "
+            # "First, you need to take the user question itself as the first keyword, "
+            # "then extract the keyword from the user question and append it to the keyword list."
+            # "Be careful not answer the question directly, just output the search query.\n\nHistories: {history}\n\nQuestion: {question}"
+        # )
+        # 模版字符串会在调用 `invoke` 的时候被注入
         self.prompt = ChatPromptTemplate.from_template(
-            "You are a professional assistant specializing in extracting keywords from user questions and chat histories. "
+            "You are a professional assistant specializing in extracting keywords from user questions. "
             "Extract keywords and connect them with spaces to output a efficient and precise search query. "
             "First, you need to take the user question itself as the first keyword, "
             "then extract the keyword from the user question and append it to the keyword list."
-            "Be careful not answer the question directly, just output the search query.\n\nHistories: {history}\n\nQuestion: {question}"
+            "The current date is {current_time}, if user question contains information related to the current date, "
+            "you need to add an additional keyword for the current date"
+            "Be careful not answer the question directly, just output the search query.\n\nQuestion: {question}"
         )
         self.chain = self.prompt | self.llm
 

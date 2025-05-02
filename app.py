@@ -1,12 +1,10 @@
 import os
-
 import torch
-
 torch.classes.__path__ = [os.path.join(torch.__path__[0], torch.classes.__file__)]
 import uuid
 from langchain.schema import Document
 from streamlit_extras.bottom_container import bottom
-from chains.models import load_vector_store
+from chains.models import load_vector_store, load_rerank
 from graph.graph import create_graph, stream_graph_updates
 from utils.common import *
 
@@ -27,10 +25,12 @@ type_options = {"⭐️ 离线对话": "chat", "🌐 联网搜索": "websearch",
 
 # 初始化上传状态、模型名称和对话类型
 if "settings" not in st.session_state:
-    st.session_state.settings = {"type": "chat", "uploaded": False}  # 默认为离线对话
+    # 默认为离线对话
+    st.session_state.settings = {"type": "chat", "uploaded": False, "search_num": env["SEARCH_NUN"]}
+    st.session_state.embedding_selectbox_disable = False
 # 初始化会话ID和向量存储
 if "config" not in st.session_state:
-    st.session_state.config = {"configurable": {"thread_id": uuid.uuid4().hex, "vectorstore": None}}
+    st.session_state.config = {"configurable": {"thread_id": uuid.uuid4().hex, "vectorstore": None, "rerank": None}}
 # 初始化会话状态变量，创建图
 if "graph" not in st.session_state:
     st.session_state.graph = create_graph()
@@ -68,19 +68,22 @@ with st.sidebar:
         help="模型温度（Temperature）参数用于控制模型输出的多样性和确定性。高 Temperature 增加多样性但可能降低确定性，低 Temperature 则增加确定性但可能降低多样性。"
     )
     st.divider()
-    env['CURRENT_EMBEDDING_MODEL'] = st.selectbox(
+    st.selectbox(
+        key="embedding_model_selectbox",
         label="选择嵌入模型",
         options=env["AVAILABLE_EMBEDDING_MODEL_LIST"],
-        index=0,
+        index=2,
         help="选择嵌入模型的种类",
     )
 
     st.session_state.settings["model_name"] = env['CURRENT_MODEL']
     st.session_state.settings["temperature"] = env['TEMPERATURE']
-    st.session_state.settings["embedding_model_name"] = env['CURRENT_EMBEDDING_MODEL']
 
-    # 加载嵌入模型
-    st.session_state.config["configurable"]["vectorstore"] = load_vector_store(env['CURRENT_EMBEDDING_MODEL'])
+    if not st.session_state.config["configurable"]["vectorstore"]:
+        st.session_state.config["configurable"]["vectorstore"] = load_vector_store(st.session_state.embedding_model_selectbox)
+
+    if not st.session_state.config["configurable"]["rerank"]:
+        st.session_state.config["configurable"]["rerank"] = load_rerank()
     st.divider()
 
     # 自定义链接
@@ -114,11 +117,11 @@ if question:
     if st.session_state.settings["type"] == "code":
         # 代码模式使用专门的代码模型
         state = {"model_name": env["CODE_MODEL"], "temperature": st.session_state.settings["temperature"],
-                 "messages": message, "type": "chat", "documents": []}
+                 "messages": message, "type": "chat", "documents": [],  "search_num": env["SEARCH_NUN"]}
     else:
         # 其他模式使用选择的模型
         state = {"model_name": st.session_state.settings["model_name"], "temperature": st.session_state.settings["temperature"],
-                 "messages": message, "type": st.session_state.settings["type"], "documents": []}
+                 "messages": message, "type": st.session_state.settings["type"], "documents": [], "search_num": env["SEARCH_NUN"]}
 
     # 处理文件上传
     if uploaded_file:
@@ -130,7 +133,7 @@ if question:
             state["documents"].append(Document(page_content=file_path))
             st.session_state.settings["uploaded"] = True
         else:
-            print("❌ 已上传其他文件")
+            st.error("请刷新页面后再上传文件")
 
     # 获取AI回答并以流式方式显示
     answer = st.chat_message("assistant").write_stream(stream_graph_updates(st.session_state.graph, state, st.session_state.config))

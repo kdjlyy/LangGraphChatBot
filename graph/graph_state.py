@@ -13,3 +13,4 @@ class GraphState(TypedDict):
     type: Literal["websearch", "file", "chat"]  # 操作类型，包括联网搜索、上传文件和聊天
     messages: Annotated[list, add_messages]     # 消息列表，使用add_messages注解处理消息追加
     documents: Optional[list] = []              # 文档列表，默认为空列表
+    search_num: int = 3                         # 搜索返回的网页数据数量，默认为3

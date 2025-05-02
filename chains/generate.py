@@ -18,6 +18,8 @@ class GenerateChain:
             "You are an assistant for question-answering tasks. "
             "Use the following documents or chat histories to answer the question. "
             "If the documents or chat histories is empty, answer the question based on your own knowledge. "
+            "The current time is {current_date}. You need to check whether the time in the document is correct. "
+            "Only answer questions based on documents with correct time."
             "If you don't know the answer, just say that you don't know."
             "\n\nDocuments: {documents}\n\nHistories: {history}\n\nQuestion: {question}")
 

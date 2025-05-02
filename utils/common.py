@@ -59,6 +59,7 @@ def load_env_vars():
         "TEMPERATURE": 0.3,
         "CODE_MODEL": CODE_MODEL,
         "AVAILABLE_EMBEDDING_MODEL_LIST": AVAILABLE_EMBEDDING_MODEL_LIST,
+        "SEARCH_NUN": os.getenv("SEARCH_NUN", 3)
     }
 
 def upload_pdf(file):

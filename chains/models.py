@@ -4,6 +4,7 @@ from langchain_core.vectorstores import InMemoryVectorStore
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 
 from embedding.ark_embedding import ArkEmbedding
+from rerank.rerank import Rerank
 
 
 def load_model(model_name: str, temperature: float) -> ChatOpenAI:
@@ -36,8 +37,6 @@ def load_embeddings(model_name: str) -> OpenAIEmbeddings:
         model=model_name
     )
 
-
-
 def load_ark_embeddings(model_name: str) -> ArkEmbedding:
     """
     加载火山方舟嵌入模型
@@ -52,6 +51,13 @@ def load_ark_embeddings(model_name: str) -> ArkEmbedding:
         api_base=os.getenv("ARK_BASE_URL", ""),
         api_key=os.getenv("ARK_API_KEY", ""),
         model_name=model_name
+    )
+
+def load_rerank() -> Rerank:
+    return Rerank(
+        model=os.getenv('RERANK_MODEL', ''),
+        base_url=os.getenv('RERANK_BASE_URL', ''),
+        api_key=os.getenv('OPENAI_API_KEY')
     )
 
 def load_vector_store(model_name: str) -> InMemoryVectorStore:

@@ -1,5 +1,6 @@
 ## 🎉 News
 
+- [x] [2025.05.02] 🎯📢可自定义网页搜索返回的网页数量；用户查询关键字提取逻辑优化；向量召回后添加 rerank 操作。
 - [x] [2025.04.29] 🎯📢现已接入火山方舟（ARK），支持选择`doubao-embedding-text-240715`和`doubao-embedding-large-text-240915`
 Embedding 模型，分别对应 2560 和 4096 向量维度。
 
@@ -7,16 +8,25 @@ Embedding 模型，分别对应 2560 和 4096 向量维度。
 
 ## 简介
 
+> 项目效果展示: [LangGraphChatBot](http://14.103.121.86:8090/)
+> <table>
+> <tr>
+> <td style="text-align: center;"><img src="./resources/websearch.png" width="600"/></td>
+> <td style="text-align: center;"><img src="./resources/file_retrival.png" width="600"/></td>
+> </tr>
+> </table>
+
 LangGraphChatBot 是基于 LangChain 和 LangGraph 的 AI 聊天机器人，可以用于回答问题、生成文章、联网搜索、处理文件等。该应用具备以下功能：
 
 1. 根据对话类型将请求路由到适当的处理节点
-2. 支持联网搜索（基于 Tavily API），获取实时信息
+2. 支持联网搜索（基于 `Tavily API`），获取实时信息
 3. 根据问题和对话历史生成优化的搜索提示词，优化搜索精度
-4. 利用编程专用的 LLM 解决代码相关问题，支持连续对话、支持流式回答展示
-5. 支持文件上传与 RAG 处理，切分文档，转换为向量表示，基于提供的文档内容和用户提问，总结生成答案
-6. TODO: 多个 LLM 基座模型及 Embedding 模型可供选择，支持在线调节模型参数
-7. TODO: 接入第三方工具，如天气、翻译等，支持更多功能
-8. TODO: 当前联网搜索链路回复较慢，优化响应时间
+4. 利用编程专用的 `LLM` 解决代码相关问题，支持连续对话、支持流式回答展示
+5. 支持文件上传与 `RAG` 处理，切分文档，转换为向量表示，基于提供的文档内容和用户提问，进行相似度搜索和 `rerank` 优化，总结生成答案
+6. 多个 `LLM` 基座模型及 `Embedding` 模型可供选择，支持在线调节模型参数
+7. `TODO:` 接入第三方工具，如天气、翻译等，支持更多功能
+8. `TODO:` 当前联网搜索链路回复较慢，优化响应时间
+
 
 
 ## 快速开始
@@ -80,26 +90,29 @@ LangGraphChatBot 是基于 LangChain 和 LangGraph 的 AI 聊天机器人，可�
 
 ```
 .
-├── chains  		# 智能体
-│   ├── generate.py
-│   ├── models.py
-│   └── summary.py
-├── graph   		# 图结构
-│   ├── graph.py
-│   └── graph_state.py
+├── chains          # 智能体
+│ ├── generate.py
+│ ├── models.py
+│ └── summary.py
+├── embedding       # embedding 兼容
+│ ├── ark_embedding.py  # 火山方舟的 embedding
+│ └── base_embedding.py # embedding 的基类
+├── graph           # 图结构
+│ ├── graph.py
+│ └── graph_state.py
 ├── upload_files    # 上传的文件
-│   └── example.txt
+│ └── example.txt
 ├── utils
-│   └── common.py 	# 工具
-├── .env   			# 环境变量配置
-├── .env.example	# 环境变量配置示例
-├── app.py 			# Streamlit 应用
-├── main.py			# 命令行程序
-├── requirements.txt 	# 依赖
-├── pyproject.toml 		# 项目配置
-├── uv.lock			# uv 锁文件
-├── run.sh			# 部署脚本
-└── README.md 		# 项目说明
+│ └── common.py     # 工具
+├── .env            # 环境变量配置
+├── .env.example    # 环境变量配置示例
+├── app.py          # Streamlit 应用
+├── main.py         # 命令行程序
+├── requirements.txt    # 依赖
+├── pyproject.toml      # 项目配置
+├── uv.lock	        # uv 锁文件
+├── run.sh          # 部署脚本
+└── README.md       # 项目说明
 ```
 其中：
 
@@ -131,6 +144,13 @@ graph TD;
 	classDef first fill-opacity:0
 	classDef last fill:#bfb6fc
 ```
+1. `file_process` 节点用于处理文件，将文件分割成 `chunk` 并使用 `Embedding` 模型转换为向量表示，存储到向量存储（`InMemoryVectorStore`）中；
+2. `extract_keywords` 节点用于从用户问题中提取关键词，并生成高效的搜索查询；
+3. `websearch` 节点用于联网搜索，根据用户问题和生成的关键字搜索查询，使用 `Tavily API` 进行联网搜索，获取实时信息；
+4. `generate` 节点用于根据用户问题、搜索文档和聊天记录生成答案，向量召回后进行 `rerank` 操作，使用 `LLM` 模型进行回答，支持连续对话和流式回答展示；
+5. 具体步骤为：首先根据用户的选择路由到不同的节点：选择“离线对话”或“代码模式”路由到 `generate` 节点；
+选择“联网搜索”路由到 `extract_keywords` 节点；
+用户上传了文件则路由到 `file_process` 节点。
 
 ## 其他
 
