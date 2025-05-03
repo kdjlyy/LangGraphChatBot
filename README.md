@@ -27,7 +27,7 @@ LangGraphChatBot 是基于 LangChain 和 LangGraph 的 AI 聊天机器人，可�
 7. `TODO:` 接入第三方工具，如天气、翻译等，支持更多功能
 8. `TODO:` 当前联网搜索链路回复较慢，优化响应时间
 
-
+> 🎉 更多 Agent 个人项目请参考：[Agent](https://github.com/kdjlyy/Agent)
 
 ## 快速开始
 
@@ -158,6 +158,6 @@ graph TD;
 
 ---
 
-更多 Agent 项目介绍请参考：[Agent](https://github.com/kdjlyy/Agent)。
+更多 Agent 个人项目介绍请参考：[Agent](https://github.com/kdjlyy/Agent)。
 
 
